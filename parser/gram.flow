@@ -1,0 +1,46 @@
+import string;
+import lingo/pegcode/driver;
+
+s2ar(s:string) -> ArExp {
+    gram = "#include ar.lingo";
+    parsic(compilePegGrammar(gram), s, defaultPegActions);
+}
+
+ar2s(s: ArExp) -> string {
+    switch (s : ArExp) {
+        ArInt(val): {
+            i2s(val);
+        }
+        ArProd(l,r): {
+            "(" + ar2s(l) + " * " + ar2s(r) + ")";
+        }
+        ArSum(l,r): {
+            "(" + ar2s(l) + " + " + ar2s(r) + ")";
+        }
+    }
+}
+
+ar2i(s : ArExp) -> int {
+    switch (s : ArExp) {
+        ArInt(val): {
+            val;
+        }
+        ArProd(l, r): {
+            ar2i(l) * ar2i(r);
+        }
+        ArSum(l, r): {
+            ar2i(l) + ar2i(r);
+        }
+    }
+}
+
+ArExp ::= ArSum, ArProd, ArInt;
+ArSum(l:ArExp, r:ArExp);
+ArProd(l:ArExp, r:ArExp);
+ArInt(val : int);
+
+main() {
+    s = "((23*434)+65)";
+    println(ar2s(s2ar(s)));
+    println(ar2i(s2ar(s)));
+}
