@@ -8,7 +8,7 @@ sub = ws "(" ws s:l ws "-" ws s:r ")" ws { ArSub(:l, :r) };
 
 div = ws "(" ws s:l ws "/" ws s:r ")" ws { ArDiv(:l, :r) };
 
-neg = ws "(" ws "-" ws s:r ")" ws { ArNeg(:r) };
+neg = ws "("* ws "-" ws s:r ")"* ws { ArNeg(:r) };
 
 int = digit + $x { ArInt(s2i(:x)) };
 

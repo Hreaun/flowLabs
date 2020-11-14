@@ -91,7 +91,7 @@ s2ar(s: string) -> ArExp {
 }
 
 main() {
-   str = "((9+81)/(-(6+3)))";
+   str = "(5*(-6+3))";
    expr = s2ar(str);
    rpnExpr = ar2rpn(expr);
    valueRPN = rpn2i(rpnExpr);
