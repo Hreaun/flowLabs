@@ -1,0 +1,103 @@
+import string;
+import lingo/pegcode/driver;
+import ds/list;
+
+ArExp ::= ArSum, ArProd, ArSub, ArDiv, ArNeg, ArInt;
+ArSum(l:ArExp, r:ArExp);
+ArProd(l:ArExp, r:ArExp);
+ArSub(l:ArExp, r:ArExp);
+ArDiv(l:ArExp, r:ArExp);
+ArNeg(r: ArExp);
+ArInt(val : int);
+//ArVar(var : string);
+
+ArRPN ::= OpRPN, ValRPN, NegRPN;
+ValRPN(val: int);
+OpRPN ::= SumRPN, ProdRPN, SubRPN, DivRPN, NegRPN;
+NegRPN();
+SubRPN();
+DivRPN();
+SumRPN();
+ProdRPN();
+
+ar2rpn(expr: ArExp) -> [ArRPN] {
+    switch (expr) {
+        ArSum(l, r): concat(concat(ar2rpn(l), ar2rpn(r)), [SumRPN()]);
+        ArProd(l, r): concat(concat(ar2rpn(l), ar2rpn(r)), [ProdRPN()]);
+        ArSub(l, r): concat(concat(ar2rpn(l), ar2rpn(r)), [SubRPN()]);
+        ArDiv(l, r): concat(concat(ar2rpn(l), ar2rpn(r)), [DivRPN()]);
+        ArNeg(r): concat(concat(ar2rpn(ArInt(0)), ar2rpn(r)), [SubRPN()]);
+        ArInt(v): [ValRPN(v)];
+    }
+}
+
+
+rpn2i(expr: [ArRPN]) -> Maybe<int> {
+    applyOp = \op, st -> {
+        switch(st) {
+            Cons(a1, t1): {
+                switch(t1) {
+                    Cons(a2, t2): Some(Cons(op(a1, a2), t2));
+                    EmptyList(): None();
+                }                
+            }
+            EmptyList(): None();
+        }
+    }
+
+    stack = fold(expr, Some(makeList()), \acc, r -> {
+        maybeBind(acc, \ac -> {
+            switch(r) {
+                ValRPN(v): Some(Cons(v, ac));
+                OpRPN(): applyOp(\a1, a2 -> {
+                    switch(r) {
+                        NegRPN(): a2 - a1;
+                        SumRPN(): a1 + a2;
+                        ProdRPN(): a1 * a2;
+                        SubRPN(): a2 - a1;
+                        DivRPN(): a2 / a1; 
+                    }
+                }, ac);
+            }
+        });
+    });
+
+    switch(stack) {
+        None(): None();
+        Some(v): {
+            if(countList(v) == 1) {
+                Some(headList(v, 0));
+            } else {
+                None();
+            }
+        }
+    }
+}
+
+ar2i(expr: ArExp) -> int {
+    switch(expr) {
+        ArSum(l, r): ar2i(l) + ar2i(r);
+        ArProd(l, r): ar2i(l) * ar2i(r);
+        ArSub(l, r): ar2i(l) - ar2i(r);
+        ArDiv(l, r): ar2i(l) / ar2i(r);
+        ArNeg(r): -ar2i(r);
+        ArInt(v): v;
+    }
+}
+
+s2ar(s: string) -> ArExp {
+    gram = "#include calc.lingo";
+    parsic(compilePegGrammar(gram), s, defaultPegActions);
+}
+
+main() {
+   str = "((9+81)/(-(6+3)))";
+   expr = s2ar(str);
+   rpnExpr = ar2rpn(expr);
+   valueRPN = rpn2i(rpnExpr);
+   if (isSome(valueRPN)) {
+       println(i2s(either(valueRPN, 0)))
+   } else {
+       println("No result")
+   }
+}
