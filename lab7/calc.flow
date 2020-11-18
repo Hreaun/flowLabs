@@ -1,0 +1,11 @@
+import lab7/expr;
+
+main() {
+    s = "(-5 / 0)";
+    //vars = setTree(makeTree(), "a", 8);
+    switch(ar2i(s2ar(s), makeTree())) {
+        Some(v): println(fract2s(v));
+        None(): println("None");
+    }
+    quit(0);
+}
