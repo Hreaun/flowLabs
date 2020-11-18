@@ -1,9 +1,9 @@
 import lab7/expr;
 
 main() {
-    s = "(-5 / 0)";
-    //vars = setTree(makeTree(), "a", 8);
-    switch(ar2i(s2ar(s), makeTree())) {
+    s = "((-a + 16) / (c + 6))";
+    vars = setTree(makeTree(), "a", 8) |> (\t -> setTree(t, "c", 10));
+    switch(ar2i(s2ar(s), vars)) {
         Some(v): println(fract2s(v));
         None(): println("None");
     }
