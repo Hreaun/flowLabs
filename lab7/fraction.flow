@@ -35,13 +35,6 @@ fractSum(l: Fraction, r: Fraction) -> Fraction{
 
 fractSub(l: Fraction, r: Fraction) -> Fraction{
     fractSum(l, fractNeg(r));
-
-    /*if(l.den == r.den){
-        Fraction(l.num - r.num, l.den);
-    } else {
-        gcdVal = gcd(l.num * r.den - r.num * l.den, l.den * r.den);
-        Fraction((l.num * r.den - r.num * l.den)/gcdVal, (l.den * r.den)/gcdVal);
-    }*/
 }
 
 fractNeg(v: Fraction) -> Fraction{

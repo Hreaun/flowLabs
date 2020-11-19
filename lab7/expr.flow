@@ -23,53 +23,28 @@ s2ar(s:string) -> ArExp {
 }
 
 ar2i(expr: ArExp, variables: Tree<string, int>) -> Maybe<Fraction>{
+    applyOperation = \operation l, r -> {
+        switch(ar2i(l, variables)) {
+            Some(a):
+                switch(ar2i(r, variables)) {
+                    Some(b): 
+                        if(b.num == 0) { 
+                            println("Division by zero.");
+                            None();
+                        } else {
+                            Some(operation(a, b));
+                        };
+                    None(): None();
+                };
+            None(): None();
+        };
+    }
+
     switch(expr){
-        ArSum(l, r): {
-            switch(ar2i(l, variables)) {
-                Some(a):
-                    switch(ar2i(r, variables)) {
-                        Some(b): Some(fractSum(a, b));
-                        None(): None();
-                    };
-                None(): None();
-            };
-        }
-        ArProd(l,r): {
-            switch(ar2i(l, variables)) {
-                Some(a): 
-                    switch(ar2i(r, variables)) {
-                        Some(b): Some(fractProd(a, b));
-                        None(): None();
-                    };
-                None(): None();
-            };
-        }
-        ArSub(l,r): {
-            switch(ar2i(l, variables)) {
-                Some(a): 
-                    switch(ar2i(r,variables)) {
-                        Some(b): Some(fractSub(a, b));
-                        None(): None();
-                    };
-                None(): None();
-            };
-        }
-        ArDiv(l,r): {
-            switch(ar2i(l, variables)) {
-                Some(a): 
-                    switch(ar2i(r, variables)) {
-                        Some(b): 
-                            if(b.num == 0) { 
-                                println("Division by zero.");
-                                None(); 
-                            } else {
-                                Some(fractDiv(a, b));
-                            };
-                        None(): None();
-                    };
-                None(): None();
-            };
-        }
+        ArSum(l, r): applyOperation(fractSum, l, r);
+        ArProd(l,r): applyOperation(fractProd, l, r);
+        ArSub(l,r): applyOperation(fractSub, l, r);
+        ArDiv(l,r): applyOperation(fractDiv, l, r);
         ArNeg(val): ar2i(ArSub(ArInt(0), val), variables);
         ArInt(val): Some(Fraction(val, 1));
         ArVar(variable): {
