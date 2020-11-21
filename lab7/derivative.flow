@@ -1,0 +1,30 @@
+import lab7/expr;
+
+
+derive(expr: ArExp, variable: ArVar) -> ArExp {
+    switch(expr) {
+        ArProd(l, r): {
+            ArSum(ArProd(derive(l, variable), r), ArProd(l, derive(r, variable)));
+        } 
+        ArSum(l ,r): {
+            ArSum(derive(l, variable), derive(r, variable));
+        }
+        ArSub(l ,r): {
+            ArSub(derive(l, variable), derive(r, variable));
+        }
+        ArDiv(l, r): {
+            ArDiv(ArSub((ArProd(derive(l), r), ArProd(derive, l))), ArProd(r, r));
+        }
+        ArInt(v): ArInt(0);
+        ArVar(var): {
+            if (var == variable) {
+                var;
+            } else {
+                ArInt(0);
+            }
+        }
+        ArNeg(v): {
+            derive(ArSub(ArInt(0), v), variable);
+        }
+    }
+}
