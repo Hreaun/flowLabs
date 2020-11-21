@@ -52,6 +52,7 @@ isNeg(expr: ArExp) -> bool {
     }
 }
 
+// using for (expr1 - (-expr2)) = (expr1 + expr2)
 changeSign(expr: ArExp) -> ArExp {
     switch(expr) {
         ArNeg(v): 
