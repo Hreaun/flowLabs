@@ -23,7 +23,7 @@ s2ar(s:string) -> ArExp {
 }
 
 ar2i(expr: ArExp, variables: Tree<string, int>) -> Maybe<Fraction>{
-    applyOperation = \operation l, r -> {
+    applyOperation = \operation, l, r -> {
         switch(ar2i(l, variables)) {
             Some(a):
                 switch(ar2i(r, variables)) {
