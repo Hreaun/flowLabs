@@ -26,15 +26,15 @@ ar2s(expr: ArExp) -> string {
 
 
 main() {
-    s = "((-a + 16) / (c + 6))";
+    s = "(4/(-6))";
     vars = setTree(makeTree(), "a", 8) |> (\t -> setTree(t, "c", 10));
     switch(ar2i(s2ar(s), vars)) {
         Some(v): println(fract2s(v));
         None(): println("None");
     }
 
-    expr = "(((2 * y) + y) / (y - (2*y)))";
-    println(ar2s(simplify(derive(s2ar(expr), ArVar("y")))));
+    expr = "((x+x)/(2*x))";
+    println(ar2s(simplify(derive(s2ar(expr), ArVar("x")))));
 
     quit(0);
 }
