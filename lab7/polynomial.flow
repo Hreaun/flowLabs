@@ -1,0 +1,135 @@
+import ds/tree;
+import lab7/expr;
+
+export {
+    Polynomial(sum: Tree<PolyTerm, int>);
+    PolyTerm(product: Tree<string, int>);
+    RationalFunction(num: Polynomial, den: Polynomial);
+
+    ar2rf(e: ArExp) -> RationalFunction;
+    rf2s(rf: RationalFunction) -> string;
+}
+
+ar2rf(e: ArExp) -> RationalFunction {
+    rf = switch (e) {
+        ArSum(l, r): sumRationalFunctions(ar2rf(l), ar2rf(r));
+        ArSub(l, r): subRationalFunctions(ar2rf(l), ar2rf(r));
+        ArProd(l, r): multRationalFunctions(ar2rf(l), ar2rf(r));
+        ArDiv(l, r): divRationalFunctions(ar2rf(l), ar2rf(r));
+        ArNeg(expr): changeSignRationalFunction(ar2rf(expr));
+        ArInt(v): RationalFunction(
+            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), v)),
+            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))
+        );
+        ArVar(name): RationalFunction(
+            Polynomial(setTree(makeTree(), PolyTerm(setTree(makeTree(), name, 1)), 1)),
+            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))
+        );
+    }
+    simplifiedZerosRf = RationalFunction(filterPolynomial(rf.num), filterPolynomial(rf.den));
+    polyGCD = gcd(coefGCD(simplifiedZerosRf.num), coefGCD(simplifiedZerosRf.den));
+    simplifiedGCDRf = divRationalFunctionByInt(simplifiedZerosRf, polyGCD);
+    numGCD = coefGCD(simplifiedGCDRf.num);
+    simplifiedGCDRf_num = divPolynomialByInt(simplifiedGCDRf.num, numGCD);
+    if(simplifiedGCDRf_num == simplifiedGCDRf.den) {
+        RationalFunction(
+            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), numGCD)),
+            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))
+        );
+    } else {
+        simplifiedGCDRf;
+    }
+}
+
+filterPolynomial(p: Polynomial) -> Polynomial {
+    Polynomial(filterTree(p.sum, \k, v -> v != 0));
+}
+
+coefGCD(p: Polynomial) -> int {
+    initial = getTreeValues(p.sum)[0];
+    foldTree(p.sum, initial, \k, v, acc -> gcd(acc, v));
+}
+
+divPolynomialByInt(p: Polynomial, c: int) -> Polynomial {
+    Polynomial(mapTree(p.sum, \v -> v / c ));
+}
+
+divRationalFunctionByInt(rf: RationalFunction, c: int) -> RationalFunction {
+    RationalFunction(divPolynomialByInt(rf.num, c), divPolynomialByInt(rf.den, c));
+}
+
+sumRationalFunctions(l: RationalFunction, r: RationalFunction) -> RationalFunction {
+    RationalFunction(sumPolynomials(multPolynomials(l.num, r.den), multPolynomials(r.num, l.den)), 
+    multPolynomials(l.den, r.den));
+}
+
+subRationalFunctions(l: RationalFunction, r: RationalFunction) -> RationalFunction {
+    RationalFunction(sumPolynomials(multPolynomials(l.num, r.den),
+        changeSignPolynomial(multPolynomials(r.num, l.den))), 
+        multPolynomials(l.den, r.den))
+}
+
+multRationalFunctions(l: RationalFunction, r: RationalFunction) -> RationalFunction {
+    RationalFunction(multPolynomials(l.num, r.num), multPolynomials(l.den, r.den));
+}
+
+divRationalFunctions(l: RationalFunction, r: RationalFunction) -> RationalFunction {
+    RationalFunction(multPolynomials(l.num, r.den), multPolynomials(l.den, r.num));
+}
+
+changeSignRationalFunction(rf: RationalFunction) -> RationalFunction {
+    RationalFunction(changeSignPolynomial(rf.num), rf.den);
+}
+
+
+changeSignPolynomial(p: Polynomial) -> Polynomial {
+    Polynomial(mapTree(p.sum, \coef -> -coef));
+}
+
+multPolyTerms(l: PolyTerm, r: PolyTerm) -> PolyTerm {
+    PolyTerm(mergeTreeCustom(l.product, r.product, \k, lv, rv -> rv + lv));
+}
+
+sumPolynomials(l: Polynomial, r: Polynomial) {
+    Polynomial(mergeTreeCustom(l.sum, r.sum, \k, lv, rv -> lv + rv));
+}
+
+multPolynomials(l: Polynomial, r: Polynomial) {
+    Polynomial(foldTree(l.sum, makeTree(), \lPolyTerm, lCoef, acc -> {
+        foldTree(r.sum, acc, \rPolyTerm, rCoef, bcc -> {
+            term = multPolyTerms(lPolyTerm, rPolyTerm);
+            switch(lookupTree(bcc, term)) {
+                Some(coef): setTree(bcc, term, coef + (lCoef * rCoef));
+                None(): setTree(bcc, term, (lCoef * rCoef));
+            }     
+        })
+    }))
+}
+
+p2s (e: Polynomial) -> string {
+    trim2(concatStrings(foldTree(e.sum, [], \k, v, acc -> {
+        if (v > 0) {
+            concat(acc, [" + " + i2s(v) + polyTerm2s(k)])
+        } else {
+            concat(acc, [" - " + i2s(-v) + polyTerm2s(k)])
+        }
+    })), " + ");
+}
+
+polyTerm2s (e: PolyTerm) -> string {
+    concatStrings(foldTree(e.product, [], \k, v, acc -> {
+        if (v != 1) { 
+            concat(acc, [k + "^" + i2s(v)]); 
+        } else {
+            concat(acc, [k]); 
+        }
+    }));
+}
+
+rf2s(rf: RationalFunction) -> string {
+    if(rf.den == Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))) {
+        p2s(rf.num);
+    } else {
+        "(" + p2s(rf.num) + ") / (" + p2s(rf.den) + ")";
+    }
+}

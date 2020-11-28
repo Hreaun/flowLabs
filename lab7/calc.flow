@@ -1,5 +1,6 @@
 import lab7/expr;
 import lab7/derivative;
+import lab7/polynomial;
 
 ar2s(expr: ArExp) -> string {
     switch (expr) {
@@ -26,6 +27,7 @@ ar2s(expr: ArExp) -> string {
 
 
 main() {
+    /*
     s = "(4/(-6))";
     vars = setTree(makeTree(), "a", 8) |> (\t -> setTree(t, "c", 10));
     switch(ar2i(s2ar(s), vars)) {
@@ -35,6 +37,10 @@ main() {
 
     expr = "((x+x)/(2*x))";
     println(ar2s(simplify(derive(s2ar(expr), ArVar("x")))));
+    */
+
+    poly = "((((9 * (x * x)) - 4) / ((3 * x) + 2)) - (3 * x))";
+    println(rf2s(ar2rf(s2ar(poly))));
 
     quit(0);
 }
