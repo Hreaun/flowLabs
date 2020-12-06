@@ -6,6 +6,8 @@ export {
     PolyTerm(product: Tree<string, int>);
     RationalFunction(num: Polynomial, den: Polynomial);
 
+
+    cutVars(rf : RationalFunction) -> RationalFunction;
     ar2rf(e: ArExp) -> RationalFunction;
     rf2s(rf: RationalFunction) -> string;
 }
@@ -29,8 +31,6 @@ ar2rf(e: ArExp) -> RationalFunction {
             Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1)));
         };
     }
-    
-    println(getVariables(rf.num));
 
     simplifiedZerosRf = RationalFunction(filterPolynomial(rf.num), filterPolynomial(rf.den));
 
@@ -38,6 +38,7 @@ ar2rf(e: ArExp) -> RationalFunction {
     simplifiedGCDRf = divRationalFunctionByInt(simplifiedZerosRf, polyGCD);
     numGCD = coefGCD(simplifiedGCDRf.num);
     simplifiedGCDRf_num = divPolynomialByInt(simplifiedGCDRf.num, numGCD);
+
     if(simplifiedGCDRf_num == simplifiedGCDRf.den) {
         RationalFunction(
             Polynomial(setTree(makeTree(), PolyTerm(makeTree()), numGCD)),
@@ -48,9 +49,65 @@ ar2rf(e: ArExp) -> RationalFunction {
     }
 }
 
+// сокращение полиномов на общие переменные
+cutVars(rf : RationalFunction) -> RationalFunction {
+    cuttedRF = fold(getVariables(rf.num), rf, \acc, var -> {
+        if (checkPolynomialForVar(rf.num, var)
+            && checkPolynomialForVar(rf.den, var)) {
+                simplifiedDivByVar_num = divPolynomialByVar(rf.num, var);
+                simplifiedDivByVar_den = divPolynomialByVar(rf.den, var);
+                RationalFunction(simplifiedDivByVar_num, simplifiedDivByVar_den);
+            } else {
+                acc;
+            }
+    });
+
+    if (cuttedRF == rf) {
+        rf;
+    } else {
+        cutVars(cuttedRF);
+    }
+}
+
+// снижение степени указанной переменной во всех членах полинома на 1
+divPolynomialByVar(p: Polynomial, var: string) {
+    Polynomial(foldTree(p.sum, makeTree(), \term, v, acc -> {
+        switch (lookupTree(term.product, var)) {
+            Some(value): setTree(acc,  PolyTerm(setTree(term.product, var, value - 1)), v);
+            None(): setTree(acc,  PolyTerm(term.product), v);
+        }
+    }));
+}
+
+// проверяет, что в полиноме все члены содержат указанную переменную
+checkPolynomialForVar(p: Polynomial, var: string) -> bool {
+    arr = [0, 0];
+
+    iterVarsCounter = foldTree(p.sum, arr, \term, v, acc -> {
+        if (containsKeyTree(term.product, var)) {
+            switch (lookupTree(term.product, var)) {
+                Some(value): {
+                    if (value > 0) {
+                        [acc[0] + 1, acc[1] + 1];
+                    } else {
+                        [acc[0] + 1, acc[1]];
+                    }
+                }
+                None(): {
+                    [acc[0] + 1, acc[1]];
+                }
+            }
+        } else {
+            [acc[0] + 1, acc[1]];
+        }
+    });
+    (iterVarsCounter[0] == iterVarsCounter[1]);
+}
+
+// добавить уникальную переменную к массиву переменных
 getVarFromTerm(e: PolyTerm, varArray: [string]) -> [string] {
     foldTree(e.product, varArray, \k, v, acc -> {
-        if (findi(acc, \var -> (var == k)) == None()) {
+        if(findi(acc, \var -> (var == k)) == None()) {
             concat(acc, [k]);
         } else {
             acc;
@@ -58,6 +115,7 @@ getVarFromTerm(e: PolyTerm, varArray: [string]) -> [string] {
     });
 }
 
+// получение массива переменных, например ["x", "y"]
 getVariables(p: Polynomial) -> [string] {
     foldTree(p.sum, [], \k, v, acc -> {
         getVarFromTerm(k, acc);
@@ -140,8 +198,10 @@ p2s (e: Polynomial) -> string {
 
 polyTerm2s (e: PolyTerm) -> string {
     concatStrings(foldTree(e.product, [], \k, v, acc -> {
-        if (v != 1) { 
+        if (v > 1) { 
             concat(acc, [k + "^" + i2s(v)]); 
+        } else if (v == 0) {
+            acc;
         } else {
             concat(acc, [k]); 
         }
