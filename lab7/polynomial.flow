@@ -21,12 +21,15 @@ ar2rf(e: ArExp) -> RationalFunction {
             Polynomial(setTree(makeTree(), PolyTerm(makeTree()), v)),
             Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))
         );
-        ArVar(name): RationalFunction(
+        ArVar(name): {
+            RationalFunction(
             Polynomial(setTree(makeTree(), PolyTerm(setTree(makeTree(), name, 1)), 1)),
-            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))
-        );
+            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1)));
+        }
     }
+
     simplifiedZerosRf = RationalFunction(filterPolynomial(rf.num), filterPolynomial(rf.den));
+
     polyGCD = gcd(coefGCD(simplifiedZerosRf.num), coefGCD(simplifiedZerosRf.den));
     simplifiedGCDRf = divRationalFunctionByInt(simplifiedZerosRf, polyGCD);
     numGCD = coefGCD(simplifiedGCDRf.num);
@@ -80,7 +83,6 @@ divRationalFunctions(l: RationalFunction, r: RationalFunction) -> RationalFuncti
 changeSignRationalFunction(rf: RationalFunction) -> RationalFunction {
     RationalFunction(changeSignPolynomial(rf.num), rf.den);
 }
-
 
 changeSignPolynomial(p: Polynomial) -> Polynomial {
     Polynomial(mapTree(p.sum, \coef -> -coef));
