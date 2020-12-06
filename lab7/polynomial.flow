@@ -10,6 +10,8 @@ export {
     rf2s(rf: RationalFunction) -> string;
 }
 
+varTree: Tree<string, int> = makeTree();
+
 ar2rf(e: ArExp) -> RationalFunction {
     rf = switch (e) {
         ArSum(l, r): sumRationalFunctions(ar2rf(l), ar2rf(r));
@@ -25,8 +27,10 @@ ar2rf(e: ArExp) -> RationalFunction {
             RationalFunction(
             Polynomial(setTree(makeTree(), PolyTerm(setTree(makeTree(), name, 1)), 1)),
             Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1)));
-        }
+        };
     }
+    
+    println(getVariables(rf.num));
 
     simplifiedZerosRf = RationalFunction(filterPolynomial(rf.num), filterPolynomial(rf.den));
 
@@ -42,6 +46,22 @@ ar2rf(e: ArExp) -> RationalFunction {
     } else {
         simplifiedGCDRf;
     }
+}
+
+getVarFromTerm(e: PolyTerm, varArray: [string]) -> [string] {
+    foldTree(e.product, varArray, \k, v, acc -> {
+        if (findi(acc, \var -> (var == k)) == None()) {
+            concat(acc, [k]);
+        } else {
+            acc;
+        }
+    });
+}
+
+getVariables(p: Polynomial) -> [string] {
+    foldTree(p.sum, [], \k, v, acc -> {
+        getVarFromTerm(k, acc);
+    });
 }
 
 filterPolynomial(p: Polynomial) -> Polynomial {
