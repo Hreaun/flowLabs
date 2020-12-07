@@ -1,0 +1,57 @@
+import string;
+import lingo/pegcode/driver;
+
+import lab9/fraction;
+
+export {
+    ArExp ::= ArSum, ArProd, ArInt, ArSub, ArDiv, ArVar, ArNeg;
+    ArSum(l:ArExp, r:ArExp);
+    ArProd(l:ArExp, r:ArExp);
+    ArSub(l:ArExp, r:ArExp);
+    ArDiv(l:ArExp, r:ArExp);
+    ArInt(val:int);
+    ArVar(var:string);
+    ArNeg(exp:ArExp);
+
+    s2ar(s:string)->ArExp;
+    ar2i(expr: ArExp, variables: Tree<string, int>) -> Maybe<Fraction>;
+}
+
+s2ar(s:string) -> ArExp {
+    gram = "#include lab9/ar.lingo";
+    parsic(compilePegGrammar(gram), s, defaultPegActions);
+}
+
+ar2i(expr: ArExp, variables: Tree<string, int>) -> Maybe<Fraction>{
+    applyOperation = \operation, l, r -> {
+        switch(ar2i(l, variables)) {
+            Some(a):
+                switch(ar2i(r, variables)) {
+                    Some(b): 
+                        if(b.num == 0) { 
+                            println("Division by zero.");
+                            None();
+                        } else {
+                            Some(operation(a, b));
+                        };
+                    None(): None();
+                };
+            None(): None();
+        };
+    }
+
+    switch(expr){
+        ArSum(l, r): applyOperation(fractSum, l, r);
+        ArProd(l,r): applyOperation(fractProd, l, r);
+        ArSub(l,r): applyOperation(fractSub, l, r);
+        ArDiv(l,r): applyOperation(fractDiv, l, r);
+        ArNeg(val): ar2i(ArSub(ArInt(0), val), variables);
+        ArInt(val): Some(Fraction(val, 1));
+        ArVar(variable): {
+            switch(lookupTree(variables, variable)) {
+                Some(val): Some(Fraction(val, 1));
+                None(): None();
+            };
+        }
+    }
+}

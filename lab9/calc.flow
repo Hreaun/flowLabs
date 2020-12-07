@@ -1,0 +1,44 @@
+import lab9/expr;
+import lab9/derivative;
+import lab9/polynomial;
+
+ar2s(expr: ArExp) -> string {
+    switch (expr) {
+        ArSum(l, r): {
+            "(" + ar2s(l) + " + " + ar2s(r) + ")";
+        }
+        ArSub(l, r): {
+            "(" + ar2s(l) + " - " + ar2s(r) + ")";
+        }
+        ArProd(l, r): {
+            "(" + ar2s(l) + " * " + ar2s(r) + ")";
+        }
+        ArDiv(l, r): {
+            "(" + ar2s(l) + " / " + ar2s(r) + ")";
+        }
+        ArNeg(v): {
+            "(-" + ar2s(v) + ")";
+        }
+        ArInt(v): i2s(v);
+        ArVar(v): v;
+    }
+}
+
+
+
+main() {
+    s = "(4/(-6))";
+    vars = setTree(makeTree(), "a", 8) |> (\t -> setTree(t, "c", 10));
+    switch(ar2i(s2ar(s), vars)) {
+        Some(v): println(fract2s(v));
+        None(): println("None");
+    }
+
+    expr = "x";
+    println(ar2s(simplify(derive(s2ar(expr), ArVar("x")))));
+    
+    poly = "((((x - 6) / (6 * y)) / (((x * x) - (y * y)) / y)) * (((x * x) + ((2 * (x * y)) + (y * y))) / x))";
+    println(rf2s(cutVars(ar2rf(s2ar(poly)))));
+
+    quit(0);
+}
