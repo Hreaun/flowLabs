@@ -6,45 +6,100 @@ export {
     PolyTerm(product: Tree<string, int>);
     RationalFunction(num: Polynomial, den: Polynomial);
 
+    simplifyRationalFunction(rationalFunc : Maybe<RationalFunction>) -> Maybe<RationalFunction>;
     cutVars(rf : RationalFunction) -> RationalFunction;
-    ar2rf(e: ArExp) -> RationalFunction;
+    ar2rf(e: ArExp) -> Maybe<RationalFunction>;
     rf2s(rf: RationalFunction) -> string;
 }
 
-ar2rf(e: ArExp) -> RationalFunction {
-    rf = switch (e) {
-        ArSum(l, r): sumRationalFunctions(ar2rf(l), ar2rf(r));
-        ArSub(l, r): subRationalFunctions(ar2rf(l), ar2rf(r));
-        ArProd(l, r): multRationalFunctions(ar2rf(l), ar2rf(r));
-        ArDiv(l, r): divRationalFunctions(ar2rf(l), ar2rf(r));
-        ArNeg(expr): changeSignRationalFunction(ar2rf(expr));
-        ArInt(v): RationalFunction(
-            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), v)),
-            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))
-        );
-        ArVar(name): {
-            RationalFunction(
-            Polynomial(setTree(makeTree(), PolyTerm(setTree(makeTree(), name, 1)), 1)),
-            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1)));
+ar2rf(e: ArExp) -> Maybe<RationalFunction> {
+    applyOpRf = \operation, l, r -> {
+        switch(ar2rf(l)) {
+            Some(a):
+                switch(ar2rf(r)) {
+                    Some(b): Some(operation(a, b));
+                    None(): None();
+                };
+            None(): None();
         };
     }
 
-    simplifiedZerosRf = RationalFunction(filterPolynomial(rf.num), filterPolynomial(rf.den));
-
-    polyGCD = gcd(coefGCD(simplifiedZerosRf.num), coefGCD(simplifiedZerosRf.den));
-    simplifiedGCDRf = divRationalFunctionByInt(simplifiedZerosRf, polyGCD);
-    numGCD = coefGCD(simplifiedGCDRf.num);
-    simplifiedGCDRf_num = divPolynomialByInt(simplifiedGCDRf.num, numGCD);
-
-    if(simplifiedGCDRf_num == simplifiedGCDRf.den) {
-        RationalFunction(
-            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), numGCD)),
+    rationalFunc = switch (e) {
+        ArSum(l, r): applyOpRf(sumRationalFunctions, l, r);
+        ArSub(l, r): applyOpRf(subRationalFunctions, l, r);
+        ArProd(l, r): applyOpRf(multRationalFunctions, l, r);
+        ArDiv(l, r): {
+            switch(ar2rf(r)) {
+                None(): None();
+                Some(rf): {
+                    if (rf.num == Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 0))) {
+                        println("Division by zero!");
+                        None();
+                    } else {
+                        applyOpRf(divRationalFunctions, l, r);
+                    }
+                }
+            }
+        }
+        ArNeg(expr): {
+            switch(ar2rf(expr)) {
+                Some(posRf): Some(changeSignRationalFunction(posRf));
+                None(): None();
+            }  
+        };
+        ArInt(v): 
+            Some(RationalFunction(
+            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), v)),
             Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))
-        );
-    } else {
-        simplifiedGCDRf;
+        ));
+        ArVar(name): {
+            Some(RationalFunction(
+            Polynomial(setTree(makeTree(), PolyTerm(setTree(makeTree(), name, 1)), 1)),
+            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))));
+        };
+    }
+    simplifyRationalFunction(rationalFunc);
+}
+
+simplifyRationalFunction(rationalFunc : Maybe<RationalFunction>) -> Maybe<RationalFunction> {
+    switch(rationalFunc) {
+        None(): None();
+        Some(rf): {
+            switch(filterPolynomial(rf.den)) {
+                None(): {
+                    println("Division by zero!");
+                    None();
+                };
+                Some(den): {
+                    num = switch(filterPolynomial(rf.num)) {
+                        None(): Polynomial(makeTree());
+                        Some(v): v;
+                    }
+                    simplifiedZerosRf = RationalFunction(num, den);
+                    if (simplifiedZerosRf.num == Polynomial(makeTree())) {
+                        Some(RationalFunction(
+                        Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 0)),
+                        Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))));
+                    } else {
+                        polyGCD = gcd(coefGCD(simplifiedZerosRf.num), coefGCD(simplifiedZerosRf.den));
+                        simplifiedGCDRf = divRationalFunctionByInt(simplifiedZerosRf, polyGCD);
+                        numGCD = coefGCD(simplifiedGCDRf.num);
+                        simplifiedGCDRf_num = divPolynomialByInt(simplifiedGCDRf.num, numGCD);
+
+                        if (simplifiedGCDRf_num == simplifiedGCDRf.den) {
+                            Some(RationalFunction(
+                            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), numGCD)),
+                            Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))));
+                        } else {
+                            Some(simplifiedGCDRf);
+                        }
+                    }
+                }    
+            }
+        }
     }
 }
+
 
 // сокращение полиномов на общие переменные
 cutVars(rf : RationalFunction) -> RationalFunction {
@@ -124,8 +179,12 @@ getVariables(p: Polynomial) -> [string] {
     });
 }
 
-filterPolynomial(p: Polynomial) -> Polynomial {
-    Polynomial(filterTree(p.sum, \k, v -> v != 0));
+filterPolynomial(p: Polynomial) -> Maybe<Polynomial> {
+    if (isEmptyTree(filterTree(p.sum, \k, v -> v != 0))) {
+        None();
+    } else {
+        Some(Polynomial(filterTree(p.sum, \k, v -> v != 0)));
+    }
 }
 
 coefGCD(p: Polynomial) -> int {
@@ -210,7 +269,11 @@ polyTerm2s (e: PolyTerm) -> string {
 
 rf2s(rf: RationalFunction) -> string {
     if(rf.den == Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1))) {
-        p2s(rf.num);
+        if (rf.num == Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 0))) {
+            "0";
+        } else {
+            p2s(rf.num);
+        }
     } else {
         "(" + p2s(rf.num) + ") / (" + p2s(rf.den) + ")";
     }

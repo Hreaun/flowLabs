@@ -37,8 +37,11 @@ main() {
     expr = "x";
     println(ar2s(simplify(derive(s2ar(expr), ArVar("x")))));
     
-    poly = "((((x - 6) / (6 * y)) / (((x * x) - (y * y)) / y)) * (((x * x) + ((2 * (x * y)) + (y * y))) / x))";
-    println(rf2s(cutVars(ar2rf(s2ar(poly)))));
+    poly = "( (x * y) / ((x - x) * (5 - 3)) )";
+    switch(ar2rf(s2ar(poly))) {
+        Some(v): println(rf2s(cutVars(v)));
+        None(): println("None");
+    }
 
     quit(0);
 }
