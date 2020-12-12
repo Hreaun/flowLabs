@@ -250,9 +250,17 @@ multPolynomials(l: Polynomial, r: Polynomial) {
 p2s (e: Polynomial) -> string {
     trim2(concatStrings(foldTree(e.sum, [], \k, v, acc -> {
         if (v > 0) {
-            concat(acc, [" + " + i2s(v) + polyTerm2s(k)])
+            if ((v != 1) || (k == PolyTerm(makeTree()))) {
+                concat(acc, [" + " + i2s(v) + polyTerm2s(k)]);
+            } else {
+                concat(acc, [" + " + polyTerm2s(k)]);
+            }
         } else {
-            concat(acc, [" - " + i2s(-v) + polyTerm2s(k)])
+            if ((v != -1) || (k == PolyTerm(makeTree()))) {
+                concat(acc, [" - " + i2s(-v) + polyTerm2s(k)]);
+            } else {
+                concat(acc, [" - " + polyTerm2s(k)]);
+            }
         }
     })), " + ");
 }

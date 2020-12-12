@@ -27,6 +27,7 @@ ar2s(expr: ArExp) -> string {
 
 
 main() {
+    /*
     s = "(4/(-6))";
     vars = setTree(makeTree(), "a", 8) |> (\t -> setTree(t, "c", 10));
     switch(ar2i(s2ar(s), vars)) {
@@ -36,8 +37,9 @@ main() {
 
     expr = "x";
     println(ar2s(simplify(derive(s2ar(expr), ArVar("x")))));
-    
-    poly = "( (x * y) / ((x - x) * (5 - 3)) )";
+    */
+
+    poly = "((x * y) * z)";
     switch(ar2rf(s2ar(poly))) {
         Some(v): println(rf2s(cutVars(v)));
         None(): println("None");
