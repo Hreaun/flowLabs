@@ -6,6 +6,7 @@ export {
     PolyTerm(product: Tree<string, int>);
     RationalFunction(num: Polynomial, den: Polynomial);
 
+    multPolynomials(l: Polynomial, r: Polynomial) -> Polynomial;
     simplifyRationalFunction(rationalFunc : Maybe<RationalFunction>) -> Maybe<RationalFunction>;
     cutVars(rf : RationalFunction) -> RationalFunction;
     ar2rf(e: ArExp) -> Maybe<RationalFunction>;
@@ -65,17 +66,22 @@ simplifyRationalFunction(rationalFunc : Maybe<RationalFunction>) -> Maybe<Ration
     switch(rationalFunc) {
         None(): None();
         Some(rf): {
-            switch(filterPolynomial(rf.den)) {
+            simplifiedSimilarRf = RationalFunction(
+                multPolynomials(Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1)), rf.num),
+                multPolynomials(Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 1)), rf.den)
+            );
+            switch(filterPolynomial(simplifiedSimilarRf.den)) {
                 None(): {
                     println("Division by zero!");
                     None();
                 };
                 Some(den): {
-                    num = switch(filterPolynomial(rf.num)) {
+                    num = switch(filterPolynomial(simplifiedSimilarRf.num)) {
                         None(): Polynomial(makeTree());
                         Some(v): v;
                     }
                     simplifiedZerosRf = RationalFunction(num, den);
+
                     if (simplifiedZerosRf.num == Polynomial(makeTree())) {
                         Some(RationalFunction(
                         Polynomial(setTree(makeTree(), PolyTerm(makeTree()), 0)),

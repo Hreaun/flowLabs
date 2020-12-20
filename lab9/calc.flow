@@ -38,8 +38,9 @@ main() {
     expr = "x";
     println(ar2s(simplify(derive(s2ar(expr), ArVar("x")))));
     */
-
-    poly = "((x * y) * z)";
+    
+    
+    poly = "((x+y)*(y-x))";
     switch(ar2rf(s2ar(poly))) {
         Some(v): println(rf2s(cutVars(v)));
         None(): println("None");
